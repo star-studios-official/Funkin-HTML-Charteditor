@@ -3,6 +3,7 @@ package funkin.ui.charSelect;
 import funkin.graphics.adobeanimate.FlxAtlasSprite;
 import funkin.modding.IScriptedClass.IBPMSyncedScriptedClass;
 import funkin.modding.events.ScriptEvent;
+import flixel.math.FlxPoint;
 
 class CharSelectPlayer extends FlxAtlasSprite implements IBPMSyncedScriptedClass
 {
@@ -60,14 +61,12 @@ class CharSelectPlayer extends FlxAtlasSprite implements IBPMSyncedScriptedClass
     }
   };
 
-  public function updatePosition(str:String)
+  public function updatePosition():Void
   {
-    switch (str)
-    {
-      case "bf" | 'pico' | "random":
-        x = initialX;
-        y = initialY;
-    }
+    var bounds:FlxPoint = this.timeline.getBoundsOrigin();
+
+    x = initialX + bounds.x;
+    y = initialY + bounds.y;
   }
 
   public function switchChar(str:String):Void
@@ -78,7 +77,7 @@ class CharSelectPlayer extends FlxAtlasSprite implements IBPMSyncedScriptedClass
 
     updateHitbox();
 
-    updatePosition(str);
+    updatePosition();
   }
 
   public function onScriptEvent(event:ScriptEvent):Void {};

@@ -467,8 +467,8 @@ class FreeplayDJ extends FlxAtlasSprite
     var daOffset = playableCharData?.getAnimationOffsetsByPrefix(AnimName);
     if (daOffset != null)
     {
-      var xValue = daOffset[0];
-      var yValue = daOffset[1];
+      var xValue = daOffset[0] - this.timeline.getBoundsOrigin().x;
+      var yValue = daOffset[1] - this.timeline.getBoundsOrigin().y;
       if (AnimName == "Boyfriend DJ watchin tv OG")
       {
         xValue += offsetX;

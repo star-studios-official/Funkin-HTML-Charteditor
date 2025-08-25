@@ -62,7 +62,6 @@ class CharSelectSubState extends MusicBeatSubState
   var playerChill:CharSelectPlayer;
   var playerChillOut:CharSelectPlayer;
   var gfChill:CharSelectGF;
-  var gfChillOut:CharSelectGF;
   var barthing:FlxAtlasSprite;
   var dipshitBacking:FunkinSprite;
   var chooseDipshit:FunkinSprite;
@@ -135,7 +134,7 @@ class CharSelectSubState extends MusicBeatSubState
     }
 
     // Mr. Static also needs some caching...
-    CharSelectAtlasHandler.loadAtlas(Paths.animateAtlas('charSelect/lockedChill'), {filterQuality: LOW});
+    CharSelectAtlasHandler.loadAtlas(Paths.animateAtlas('charSelect/lockedChill'), {filterQuality: LOW, cacheOnLoad: true});
   }
 
   override public function create():Void
@@ -191,16 +190,14 @@ class CharSelectSubState extends MusicBeatSubState
     {
       gfChill = new CharSelectGF();
       gfChill.switchGF(character);
-      gfChill.x += cutoutSize;
-      gfChill.y += 200;
       add(gfChill);
 
-      playerChillOut = new CharSelectPlayer(cutoutSize + 600, 200);
+      playerChillOut = new CharSelectPlayer(cutoutSize, 0);
       playerChillOut.switchChar(character);
       playerChillOut.visible = false;
       add(playerChillOut);
 
-      playerChill = new CharSelectPlayer(cutoutSize + 600, 200);
+      playerChill = new CharSelectPlayer(cutoutSize, 0);
       playerChill.switchChar(character);
       add(playerChill);
     }
@@ -579,7 +576,7 @@ class CharSelectSubState extends MusicBeatSubState
 
       lock.playAnimation("unlock");
       lock.onAnimationFrame.add(function(animName:String, frame:Int) {
-        if (frame == 39)
+        if (frame == 40)
         {
           playerChillOut.playAnimation("death");
         }
