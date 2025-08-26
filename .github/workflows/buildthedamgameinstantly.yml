@@ -45,7 +45,7 @@ jobs:
       - name: Compile
         run: haxelib run lime build project.hxp html5 -v -release -DFEATURE_POLYMOD_MODS -DFEATURE_CHART_EDITOR -DFEATURE_STAGE_EDITOR  -DFEATURE_GHOST_TAPPING
       - name: Publish Artifact
-        uses: actions/upload-artifact@v2.2.4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: VSliceHTML5
           path: 'export/release/html5/bin'
