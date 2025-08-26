@@ -1,90 +1,51 @@
-# Builds the game on all platforms, to ensure it compiles on all target platforms.
-# This helps to ensure workers focus on the master branch.
+# This is a basic workflow to help you get started with Actions
 
-name: Build and Upload nightly game builds (w/o Changes)
+name: Build for release
 
+
+# Controls when the action will run.
 on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      build-defines:
-        type: string
-        description: Build defines to use
-        default: '-DGITHUB_BUILD'
-      save-artifact:
-        type: boolean
-        description: Save the build artifact to Github Actions (sends to itch otherwise)
-        default: false
-  push:
 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  # This workflow contains a single job called "build"
+  buildHTML:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
 
-
-  build-game-on-host:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: windows
-            runs-on: windows
-          - target: macos
-            runs-on: macos
-          # TODO: Install XCode to build iOS
-          # - target: ios
-          #   runs-on: macos
-    runs-on:
-      - ${{ matrix.runs-on }}
-    defaults:
-      run:
-        shell: bash
-    env:
-      BUILD_DEFINES: ${{ github.event.inputs.build-defines || '-DGITHUB_BUILD' }}
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - name: Make git happy
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - uses: krdlab/setup-haxe@master
+        with:
+          haxe-version: 4.3.7
+      # Runs a set of commands using the runners shell
+      - name: Install Haxelib
         run: |
-          git config --global --replace-all safe.directory $GITHUB_WORKSPACE
-      - name: Get checkout token
-        uses: actions/create-github-app-token@v1
-        id: app_token
+          sudo apt-get install libvlc-dev
+          sudo apt-get install libvlccore-dev
+          sudo apt-get install libvlc-bin
+          sudo apt-get install vlc-bin
+          sudo apt-get install libluajit-5.1-2
+          sudo apt-get install libluajit-5.1-dev
+          haxelib setup ~/haxelib
+          haxelib install hxcpp > /dev/null --quiet
+          haxelib install hmm --quiet
+          haxelib run hmm install
+          haxelib run lime rebuild systools linux
+          git submodule update --init --recursive
+      - name: Create Version Tag
+        run: echo "${{github.run_id}}" > VERSION
+      - name: Compile
+        run: haxelib run lime build project.hxp html5 -v -release -DFEATURE_POLYMOD_MODS -DFEATURE_CHART_EDITOR -DFEATURE_STAGE_EDITOR  -DFEATURE_GHOST_TAPPING
+      - name: Publish Artifact
+        uses: actions/upload-artifact@v2.2.4
         with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PEM }}
-          owner: ${{ github.repository_owner }}
-      - name: Checkout repo
-        uses: funkincrew/ci-checkout@v7.3.3
-        with:
-          submodules: 'recursive'
-          token: ${{ steps.app_token.outputs.token }}
-          persist-credentials: false
-          submodule-aliases: |
-            https://github.com/FunkinCrew/Funkin.assets > https://github.com/FunkinCrew/Funkin-assets-secret
-            https://github.com/FunkinCrew/Funkin.art > https://github.com/FunkinCrew/Funkin-art-secret
-      - name: Setup build environment
-        uses: ./.github/actions/setup-haxe
-        with:
-          gh-token: ${{ steps.app_token.outputs.token }}
-      - name: Setup HXCPP dev commit
-        run: |
-          cd .haxelib/hxcpp/git/tools/hxcpp
-          haxe compile.hxml
-          cd ../../../../..
-      - name: Build game (windows)
-        if: ${{ matrix.target == 'windows' }}
-        run: |
-          haxelib run lime build windows -v -release $BUILD_DEFINES
-        timeout-minutes: 120
-      - name: Build game (unix)
-        if: ${{ matrix.target != 'windows' }}
-        run: |
-          haxelib run lime build html5 -v -release --times $BUILD_DEFINES
-        timeout-minutes: 120
-      - name: Save build artifact to Github Actions
-        if: ${{ github.event.inputs.save-artifact }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ matrix.target }}
-          path: export/release/${{matrix.target}}/bin/
-      - name: Upload build artifacts
-        uses: ./.github/actions/upload-itch
-        with:
-          butler-key: ${{ secrets.BUTLER_API_KEY}}
-          target: ${{ matrix.target }}
+          name: VSliceHTML5
+          path: 'export/release/html5/bin'
